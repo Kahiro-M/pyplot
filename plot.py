@@ -27,7 +27,7 @@ class Application(tk.Frame):
         self.figCanvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         # フレームをウィンドウに配置
-        frame.pack()
+        frame.pack(fill=tk.BOTH, expand=True)
 
         # ボタンの作成
         sinPlotButton = tk.Button(self.master, text = "sin Draw Graph", command = self.sin_plot)
