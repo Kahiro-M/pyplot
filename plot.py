@@ -1,5 +1,6 @@
 import random
 import tkinter as tk
+from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
@@ -30,15 +31,32 @@ class Application(tk.Frame):
         frame.pack(fill=tk.BOTH, expand=True)
 
         # ボタンの作成
-        sinPlotButton = tk.Button(self.master, text = "sin Draw Graph", command = self.sin_plot)
-        cosPlotButton = tk.Button(self.master, text = "cos Draw Graph", command = self.cos_plot)
+        sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
+        cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
+
+        # ファイル読み込み関係のUI
+        inFilePathEditBox = tk.Entry(self.master, width=80)
+        inFileButton = tk.Button(self.master, text='ファイル選択', command=lambda:self.open_file_command(inFilePathEditBox, [('CSVファイル', '*.csv'), ('TEXTファイル', '*.txt')]))
+
+        # 余白
+        leftMarginSpace  = tk.Canvas(width=1, height=1)
 
         # 配置
-        sinPlotButton.pack(side = tk.BOTTOM)
-        cosPlotButton.pack(side = tk.BOTTOM)
+        inFileButton.pack(side=tk.LEFT)
+        inFilePathEditBox.pack(side=tk.LEFT)
+        leftMarginSpace.pack(side=tk.LEFT, expand=True)
+        sinPlotButton.pack(side=tk.BOTTOM)
+        cosPlotButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
 
+    #  [FILE]ボタン押下時に呼び出し。選択したファイルのパスをテキストボックスに設定する。
+    def open_file_command(self, inFilePathEditBox, inFileTypeList):
+        filePath = filedialog.askopenfilename(filetypes = inFileTypeList)
+        inFilePathEditBox.delete(0, tk.END)
+        inFilePathEditBox.insert(tk.END, filePath)
+
+    # sinカーブを描画（動作確認用）
     def sin_plot(self):
         # 表示するデータの作成
         rand = random.random()
@@ -52,6 +70,7 @@ class Application(tk.Frame):
         # 表示
         self.figCanvas.draw()
 
+    # cosカーブを描画（動作確認用）
     def cos_plot(self):
         # 表示するデータの作成
         rand = random.random()
