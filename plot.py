@@ -3,7 +3,19 @@ import tkinter as tk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+# 日時処理
+import datetime as dt
+
+# ---------要インストール---------
+# 表形式データ処理
+import pandas as pd
+# 数学処理
 import numpy as np
+# エンコード判定
+from chardet.universaldetector import UniversalDetector
+# --------------------------------
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -33,6 +45,7 @@ class Application(tk.Frame):
         # ボタンの作成
         sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
+        showDataButton = tk.Button(self.master, text='show data', command=lambda:self.show_data(inFilePathEditBox))
 
         # ファイル読み込み関係のUI
         inFilePathEditBox = tk.Entry(self.master, width=80)
@@ -47,6 +60,7 @@ class Application(tk.Frame):
         leftMarginSpace.pack(side=tk.LEFT, expand=True)
         sinPlotButton.pack(side=tk.BOTTOM)
         cosPlotButton.pack(side=tk.BOTTOM)
+        showDataButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
 
@@ -55,6 +69,36 @@ class Application(tk.Frame):
         filePath = filedialog.askopenfilename(filetypes = inFileTypeList)
         inFilePathEditBox.delete(0, tk.END)
         inFilePathEditBox.insert(tk.END, filePath)
+
+    # データ参照
+    def show_data(self, inFilePathEditBox):
+        filePath = inFilePathEditBox.get()
+
+        # ファイルのエンコードを確認
+        try:  # 以下の処理を実行
+            with open(filePath, 'rb') as f:
+                print('a')
+                detector = UniversalDetector()
+                for line in f:
+                    detector.feed(line)
+                    if detector.done:
+                        break
+                detector.close()
+                result = detector.result
+        except FileNotFoundError as err:  # Errorが発生した場合、以下の処理を実行
+            tk.messagebox.showerror('ファイルオープンエラー','ファイルが開けません。\n{0}'.format(err))
+            return
+        except Exception as err:  # Errorが発生した場合、以下の処理を実行
+            tk.messagebox.showerror('エラー','エラーが発生しました。\n{0}'.format(err))
+            return
+
+        enc = 'utf-8'
+        if result['encoding'] == 'SHIFT_JIS':
+            enc = 'CP932'
+
+        # 1行目のヘッダーを無視して読み込む
+        df = pd.read_csv(filePath, encoding=enc, header=None, index_col=0, skiprows=1) 
+        print(df)
 
     # sinカーブを描画（動作確認用）
     def sin_plot(self):
