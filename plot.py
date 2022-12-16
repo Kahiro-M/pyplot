@@ -27,6 +27,7 @@ class Application(tk.Frame):
         self.indf = pd.DataFrame()
         self.df = pd.DataFrame()
         self.dailySumDf = pd.DataFrame()
+        self.monthlySumDf = pd.DataFrame()
 
         #-----------------------------------------------
 
@@ -64,8 +65,8 @@ class Application(tk.Frame):
         inFileButton.pack(side=tk.LEFT)
         inFilePathEditBox.pack(side=tk.LEFT)
         leftMarginSpace.pack(side=tk.LEFT, expand=True)
-        sinPlotButton.pack(side=tk.BOTTOM)
-        cosPlotButton.pack(side=tk.BOTTOM)
+        # sinPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
+        # cosPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         dailyPlotButton.pack(side=tk.BOTTOM)
         showDataButton.pack(side=tk.BOTTOM)
 
@@ -116,6 +117,9 @@ class Application(tk.Frame):
             self.dailySumDf = pd.crosstab(index=self.df['date'], columns=self.df['uid'],values=self.df['value'],aggfunc='sum')
             self.dailySumDf = self.dailySumDf.reset_index()
 
+            # 集計（月次）
+            self.monthlySumDf = self.df.set_index('date').resample('M').sum()
+
             # 凡例ラベル用データ作成
             self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
             self.uidNameDf = pd.DataFrame(self.uidNameDf.columns.levels[1], index=self.uidNameDf.columns.levels[0])
@@ -125,9 +129,8 @@ class Application(tk.Frame):
             tk.messagebox.showerror('エラー','エラーが発生しました。\n{0}'.format(err))
             return
 
-    # 日毎の棒グラフ
+    # 日毎の折れ線グラフ
     def daily_plot(self):
-
         tmp = self.dailySumDf.set_index('date')
         for col in list(tmp.columns):
             x = self.dailySumDf['date']
