@@ -52,6 +52,7 @@ class Application(tk.Frame):
         sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
         dailyPlotButton = tk.Button(self.master, text='Daily Line Draw Graph', command=self.daily_plot)
+        monthlyBarPlotButton = tk.Button(self.master, text='Monthly Bar Draw Graph', command=self.monthly_bar_plot)
         showDataButton = tk.Button(self.master, text='Load Data', command=lambda:self.show_data(inFilePathEditBox))
 
         # ファイル読み込み関係のUI
@@ -67,6 +68,7 @@ class Application(tk.Frame):
         leftMarginSpace.pack(side=tk.LEFT, expand=True)
         # sinPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         # cosPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
+        monthlyBarPlotButton.pack(side=tk.BOTTOM)
         dailyPlotButton.pack(side=tk.BOTTOM)
         showDataButton.pack(side=tk.BOTTOM)
 
@@ -118,7 +120,8 @@ class Application(tk.Frame):
             self.dailySumDf = self.dailySumDf.reset_index()
 
             # 集計（月次）
-            self.monthlySumDf = self.df.set_index('date').resample('M').sum()
+            self.monthlySumDf = self.dailySumDf.set_index('date').resample('M').sum()
+            print(self.monthlySumDf.head())
 
             # 凡例ラベル用データ作成
             self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
@@ -143,6 +146,35 @@ class Application(tk.Frame):
             # 表示
             self.figCanvas.draw()
 
+
+    # 月毎の棒グラフ
+    def monthly_bar_plot(self):
+        tmp = self.monthlySumDf
+        barWidth = 5
+        length = len(list(tmp.columns)) * barWidth * (-1)
+        for col in list(tmp.columns):
+            x = tmp.index + dt.timedelta(days=length)
+            y = tmp[col]
+
+            # グラフの描画
+            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0])
+            self.ax.legend(prop={"family":"MS Gothic"})
+
+            length = length+barWidth
+            # self.autolabel(rects)
+
+            # 表示
+            self.figCanvas.draw()
+
+    def autolabel(self, rects):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = rect.get_height()
+            self.ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
 
     # sinカーブを描画（動作確認用）
     def sin_plot(self):
