@@ -23,6 +23,11 @@ class Application(tk.Frame):
         self.master = master
         self.master.title('plot graph')
 
+        # データ
+        self.indf = pd.DataFrame()
+        self.df = pd.DataFrame()
+        self.dailySumDf = pd.DataFrame()
+
         #-----------------------------------------------
 
         # matplotlib配置用フレーム
@@ -45,7 +50,8 @@ class Application(tk.Frame):
         # ボタンの作成
         sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
-        showDataButton = tk.Button(self.master, text='show data', command=lambda:self.show_data(inFilePathEditBox))
+        dailyPlotButton = tk.Button(self.master, text='Daily Line Draw Graph', command=self.daily_plot)
+        showDataButton = tk.Button(self.master, text='Load Data', command=lambda:self.show_data(inFilePathEditBox))
 
         # ファイル読み込み関係のUI
         inFilePathEditBox = tk.Entry(self.master, width=80)
@@ -60,6 +66,7 @@ class Application(tk.Frame):
         leftMarginSpace.pack(side=tk.LEFT, expand=True)
         sinPlotButton.pack(side=tk.BOTTOM)
         cosPlotButton.pack(side=tk.BOTTOM)
+        dailyPlotButton.pack(side=tk.BOTTOM)
         showDataButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
@@ -77,7 +84,6 @@ class Application(tk.Frame):
         # ファイルのエンコードを確認
         try:  # 以下の処理を実行
             with open(filePath, 'rb') as f:
-                print('a')
                 detector = UniversalDetector()
                 for line in f:
                     detector.feed(line)
@@ -96,9 +102,44 @@ class Application(tk.Frame):
         if result['encoding'] == 'SHIFT_JIS':
             enc = 'CP932'
 
-        # 1行目のヘッダーを無視して読み込む
-        df = pd.read_csv(filePath, encoding=enc, header=None, index_col=0, skiprows=1) 
-        print(df)
+        try:  # 以下の処理を実行
+            # 1行目のヘッダーを無視して読み込む
+            indf = pd.read_csv(filePath, encoding=enc, header=0) 
+            self.df = indf.set_axis(['date','uid','name','value','note'],axis='columns')
+            self.df['uid'] = self.df['uid'].astype('str')
+            self.df['value'] = self.df['value'].astype('float')
+            self.df['name'] = self.df['name'].astype('str')
+            self.df['note'] = self.df['note'].astype('str')
+            self.df['date'] = self.df['date'].apply(pd.to_datetime)
+
+            # 集計（日次）
+            self.dailySumDf = pd.crosstab(index=self.df['date'], columns=self.df['uid'],values=self.df['value'],aggfunc='sum')
+            self.dailySumDf = self.dailySumDf.reset_index()
+
+            # 凡例ラベル用データ作成
+            self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
+            self.uidNameDf = pd.DataFrame(self.uidNameDf.columns.levels[1], index=self.uidNameDf.columns.levels[0])
+
+            tk.messagebox.showinfo('データ読み込み完了','データ読み込みが完了しました。\nグラフ描画の準備ができました。')
+        except Exception as err:  # Errorが発生した場合、以下の処理を実行
+            tk.messagebox.showerror('エラー','エラーが発生しました。\n{0}'.format(err))
+            return
+
+    # 日毎の棒グラフ
+    def daily_plot(self):
+
+        tmp = self.dailySumDf.set_index('date')
+        for col in list(tmp.columns):
+            x = self.dailySumDf['date']
+            y = self.dailySumDf[col]
+
+            # グラフの描画
+            self.ax.plot(x, y, label=self.uidNameDf.loc[col][0])
+            self.ax.legend(prop={"family":"MS Gothic"})
+
+            # 表示
+            self.figCanvas.draw()
+
 
     # sinカーブを描画（動作確認用）
     def sin_plot(self):
@@ -109,7 +150,7 @@ class Application(tk.Frame):
 
         # グラフの描画
         self.ax.plot(x, y, label='sin x {:.3f}'.format(rand))
-        self.ax.legend()
+        self.ax.legend(prop={"family":"MS Gothic"})
 
         # 表示
         self.figCanvas.draw()
@@ -123,7 +164,7 @@ class Application(tk.Frame):
 
         # グラフの描画
         self.ax.plot(x, y, label='cos x {:.3f}'.format(rand))
-        self.ax.legend()
+        self.ax.legend(prop={"family":"MS Gothic"})
 
         # 表示
         self.figCanvas.draw()
