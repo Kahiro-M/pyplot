@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.pyplot as plt
 
 # 日時処理
 import datetime as dt
@@ -29,6 +30,10 @@ class Application(tk.Frame):
         self.dailySumDf = pd.DataFrame()
         self.monthlySumDf = pd.DataFrame()
 
+        # plot設定
+        self.itemNum = 0
+        self.cmap = plt.get_cmap("tab10")
+
         #-----------------------------------------------
 
         # matplotlib配置用フレーム
@@ -53,7 +58,6 @@ class Application(tk.Frame):
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
         dailyPlotButton = tk.Button(self.master, text='Daily Line Draw Graph', command=self.daily_plot)
         monthlyBarPlotButton = tk.Button(self.master, text='Monthly Bar Draw Graph', command=self.monthly_bar_plot)
-        showDataButton = tk.Button(self.master, text='Load Data', command=lambda:self.show_data(inFilePathEditBox))
 
         # ファイル読み込み関係のUI
         inFilePathEditBox = tk.Entry(self.master, width=80)
@@ -70,7 +74,6 @@ class Application(tk.Frame):
         # cosPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         monthlyBarPlotButton.pack(side=tk.BOTTOM)
         dailyPlotButton.pack(side=tk.BOTTOM)
-        showDataButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
 
@@ -79,11 +82,10 @@ class Application(tk.Frame):
         filePath = filedialog.askopenfilename(filetypes = inFileTypeList)
         inFilePathEditBox.delete(0, tk.END)
         inFilePathEditBox.insert(tk.END, filePath)
+        self.load_data(filePath)
 
     # データ参照
-    def show_data(self, inFilePathEditBox):
-        filePath = inFilePathEditBox.get()
-
+    def load_data(self, filePath):
         # ファイルのエンコードを確認
         try:  # 以下の処理を実行
             with open(filePath, 'rb') as f:
@@ -140,12 +142,14 @@ class Application(tk.Frame):
             y = self.dailySumDf[col]
 
             # グラフの描画
-            self.ax.plot(x, y, label=self.uidNameDf.loc[col][0])
+            self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
             self.figCanvas.draw()
 
+            # カウンター更新
+            self.itemNum = self.itemNum+1
 
     # 月毎の棒グラフ
     def monthly_bar_plot(self):
@@ -157,7 +161,7 @@ class Application(tk.Frame):
             y = tmp[col]
 
             # グラフの描画
-            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0])
+            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
 
             length = length+barWidth
@@ -166,6 +170,10 @@ class Application(tk.Frame):
             # 表示
             self.figCanvas.draw()
 
+            # カウンター更新
+            self.itemNum = self.itemNum+1
+
+    # 各点のラベル付与
     def autolabel(self, rects):
         """Attach a text label above each bar in *rects*, displaying its height."""
         for rect in rects:
