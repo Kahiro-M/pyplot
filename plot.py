@@ -30,6 +30,7 @@ class Application(tk.Frame):
         self.df = pd.DataFrame()
         self.dailySumDf = pd.DataFrame()
         self.monthlySumDf = pd.DataFrame()
+        self.yearlySumDf = pd.DataFrame()
 
         # plot設定
         self.itemNum = 0
@@ -41,11 +42,12 @@ class Application(tk.Frame):
         frame = tk.Frame(self.master)
         
         # matplotlibの描画領域の作成
-        fig = Figure()
+        self.fig = Figure()
         # 座標軸の作成
-        self.ax = fig.add_subplot(1, 1, 1)
+        self.ax = self.fig.add_subplot(1, 1, 1)
+        self.ax.grid()  # グリッドを表示
         # matplotlibの描画領域とウィジェット(Frame)の関連付け
-        self.figCanvas = FigureCanvasTkAgg(fig, frame)
+        self.figCanvas = FigureCanvasTkAgg(self.fig, frame)
         # matplotlibのツールバーを作成
         self.toolbar = NavigationToolbar2Tk(self.figCanvas, frame)
         # matplotlibのグラフをフレームに配置
@@ -57,10 +59,12 @@ class Application(tk.Frame):
         # ボタンの作成
         sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
+        plotClearButton = tk.Button(self.master, text='clear', command=self.plot_clear)
         dailyPlotButton = tk.Button(self.master, text='日次　折れ線', command=self.daily_plot)
         weeklyPlotButton = tk.Button(self.master, text='週次　折れ線', command=self.weekly_plot)
         weeklyBarPlotButton = tk.Button(self.master, text='週次　　棒　', command=self.weekly_bar_plot)
         monthlyBarPlotButton = tk.Button(self.master, text='月次　　棒　', command=self.monthly_bar_plot)
+        yearlyBarPlotButton = tk.Button(self.master, text='年次　　棒　', command=self.yearly_bar_plot)
 
         # ファイル読み込み関係のUI
         inFilePathEditBox = tk.Entry(self.master, width=80)
@@ -75,10 +79,12 @@ class Application(tk.Frame):
         leftMarginSpace.pack(side=tk.LEFT, expand=True)
         # sinPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         # cosPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
+        yearlyBarPlotButton.pack(side=tk.BOTTOM)
         monthlyBarPlotButton.pack(side=tk.BOTTOM)
         weeklyBarPlotButton.pack(side=tk.BOTTOM)
         weeklyPlotButton.pack(side=tk.BOTTOM)
         dailyPlotButton.pack(side=tk.BOTTOM)
+        plotClearButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
 
@@ -127,6 +133,9 @@ class Application(tk.Frame):
             # 集計（月次）
             self.monthlySumDf = self.dailySumDf.set_index('date').resample('M').sum()
 
+            # 集計（年次）
+            self.yearlySumDf = self.dailySumDf.set_index('date').resample('Y').sum()
+
             # 凡例ラベル用データ作成
             # self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
             # self.uidNameDf = pd.DataFrame(self.uidNameDf.columns.levels[1], index=self.uidNameDf.columns.levels[0])
@@ -148,6 +157,14 @@ class Application(tk.Frame):
         first_dow = dt.date(inDate.year, inDate.month, 1).weekday()
         offset = (first_dow - firstweekday) % 7
         return (inDate.day + offset - 1) // 7 + 1
+
+    # グラフ初期化
+    def plot_clear(self):
+        self.fig.clf()
+        self.ax = self.fig.add_subplot(1, 1, 1)
+        self.ax.grid()  # グリッドを表示
+        self.figCanvas.draw()
+        self.itemNum = 0
 
     # 日毎の折れ線グラフ
     def daily_plot(self):
@@ -213,6 +230,29 @@ class Application(tk.Frame):
     def monthly_bar_plot(self):
         tmp = self.monthlySumDf
         barWidth = 5
+        length = len(list(tmp.columns)) * barWidth * (-1)
+        for col in list(tmp.columns):
+            x = tmp.index + dt.timedelta(days=length)
+            y = tmp[col]
+
+            # グラフの描画
+            # rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            rects = self.ax.bar(x, y, width=barWidth, label=col, color=self.cmap(self.itemNum))
+            self.ax.legend(prop={"family":"MS Gothic"})
+
+            length = length+barWidth
+            # self.autolabel(rects)
+
+            # 表示
+            self.figCanvas.draw()
+
+            # カウンター更新
+            self.itemNum = self.itemNum+1
+
+    # 年毎の棒グラフ
+    def yearly_bar_plot(self):
+        tmp = self.yearlySumDf
+        barWidth = 30
         length = len(list(tmp.columns)) * barWidth * (-1)
         for col in list(tmp.columns):
             x = tmp.index + dt.timedelta(days=length)
