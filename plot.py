@@ -122,15 +122,13 @@ class Application(tk.Frame):
 
             # 集計（週次）（日曜日に記載されている金額は先週月曜～当週日曜の実績の合計）
             self.weeklySumDf = self.dailySumDf.set_index('date').resample('W').sum()
-            self.weeklySumDf['date'] = self.weeklySumDf.index
-            # self.weeklySumDf = self.weeklySumDf.assign(yearWeekNum=self.weeklySumDf['date'].apply(getyearNthWeek))
 
             # 集計（月次）
             self.monthlySumDf = self.dailySumDf.set_index('date').resample('M').sum()
 
             # 凡例ラベル用データ作成
-            self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
-            self.uidNameDf = pd.DataFrame(self.uidNameDf.columns.levels[1], index=self.uidNameDf.columns.levels[0])
+            # self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
+            # self.uidNameDf = pd.DataFrame(self.uidNameDf.columns.levels[1], index=self.uidNameDf.columns.levels[0])
 
             tk.messagebox.showinfo('データ読み込み完了','データ読み込みが完了しました。\nグラフ描画の準備ができました。')
         except Exception as err:  # Errorが発生した場合、以下の処理を実行
@@ -158,7 +156,8 @@ class Application(tk.Frame):
             y = self.dailySumDf[col]
 
             # グラフの描画
-            self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            # self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
@@ -171,11 +170,12 @@ class Application(tk.Frame):
     def weekly_plot(self):
         tmp = self.weeklySumDf
         for col in list(tmp.columns):
-            x = tmp['date']
+            x = tmp.index
             y = tmp[col]
 
             # グラフの描画
-            rects = self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            # rects = self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            rects = self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
             # self.autolabel(rects)
 
@@ -195,7 +195,8 @@ class Application(tk.Frame):
             y = tmp[col]
 
             # グラフの描画
-            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            # rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            rects = self.ax.bar(x, y, width=barWidth, label=col, color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
 
             length = length+barWidth
@@ -217,7 +218,8 @@ class Application(tk.Frame):
             y = tmp[col]
 
             # グラフの描画
-            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            # rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            rects = self.ax.bar(x, y, width=barWidth, label=col, color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
 
             length = length+barWidth
