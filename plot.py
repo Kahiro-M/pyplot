@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 # エンコード判定
 from chardet.universaldetector import UniversalDetector
+import chardet
 # --------------------------------
 
 
