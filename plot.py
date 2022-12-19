@@ -56,8 +56,10 @@ class Application(tk.Frame):
         # ボタンの作成
         sinPlotButton = tk.Button(self.master, text='sin Draw Graph', command=self.sin_plot)
         cosPlotButton = tk.Button(self.master, text='cos Draw Graph', command=self.cos_plot)
-        dailyPlotButton = tk.Button(self.master, text='Daily Line Draw Graph', command=self.daily_plot)
-        monthlyBarPlotButton = tk.Button(self.master, text='Monthly Bar Draw Graph', command=self.monthly_bar_plot)
+        dailyPlotButton = tk.Button(self.master, text='日次　折れ線', command=self.daily_plot)
+        weeklyPlotButton = tk.Button(self.master, text='週次　折れ線', command=self.weekly_plot)
+        weeklyBarPlotButton = tk.Button(self.master, text='週次　　棒　', command=self.weekly_bar_plot)
+        monthlyBarPlotButton = tk.Button(self.master, text='月次　　棒　', command=self.monthly_bar_plot)
 
         # ファイル読み込み関係のUI
         inFilePathEditBox = tk.Entry(self.master, width=80)
@@ -73,6 +75,8 @@ class Application(tk.Frame):
         # sinPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         # cosPlotButton.pack(side=tk.BOTTOM)    # 描画処理のサンプル
         monthlyBarPlotButton.pack(side=tk.BOTTOM)
+        weeklyBarPlotButton.pack(side=tk.BOTTOM)
+        weeklyPlotButton.pack(side=tk.BOTTOM)
         dailyPlotButton.pack(side=tk.BOTTOM)
 
         #-----------------------------------------------
@@ -121,9 +125,13 @@ class Application(tk.Frame):
             self.dailySumDf = pd.crosstab(index=self.df['date'], columns=self.df['uid'],values=self.df['value'],aggfunc='sum')
             self.dailySumDf = self.dailySumDf.reset_index()
 
+            # 集計（週次）（日曜日に記載されている金額は先週月曜～当週日曜の実績の合計）
+            self.weeklySumDf = self.dailySumDf.set_index('date').resample('W').sum()
+            self.weeklySumDf['date'] = self.weeklySumDf.index
+            # self.weeklySumDf = self.weeklySumDf.assign(yearWeekNum=self.weeklySumDf['date'].apply(getyearNthWeek))
+
             # 集計（月次）
             self.monthlySumDf = self.dailySumDf.set_index('date').resample('M').sum()
-            print(self.monthlySumDf.head())
 
             # 凡例ラベル用データ作成
             self.uidNameDf = pd.crosstab(index=self.df['date'], columns=[self.df['uid'],self.df['name']])
@@ -133,6 +141,16 @@ class Application(tk.Frame):
         except Exception as err:  # Errorが発生した場合、以下の処理を実行
             tk.messagebox.showerror('エラー','エラーが発生しました。\n{0}'.format(err))
             return
+
+    # 任意の日付がその年で第何週目かを取得
+    def getyearNthWeek(inDate):
+        return inDate.isocalendar()[1]
+
+    # 任意の日付がカレンダー上の第何週目かを取得
+    def getNthWeek2Datetime(inDate, firstweekday=0):
+        first_dow = dt.date(inDate.year, inDate.month, 1).weekday()
+        offset = (first_dow - firstweekday) % 7
+        return (inDate.day + offset - 1) // 7 + 1
 
     # 日毎の折れ線グラフ
     def daily_plot(self):
@@ -144,6 +162,46 @@ class Application(tk.Frame):
             # グラフの描画
             self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
             self.ax.legend(prop={"family":"MS Gothic"})
+
+            # 表示
+            self.figCanvas.draw()
+
+            # カウンター更新
+            self.itemNum = self.itemNum+1
+
+    # 週毎の折れ線グラフ
+    def weekly_plot(self):
+        tmp = self.weeklySumDf
+        for col in list(tmp.columns):
+            x = tmp['date']
+            y = tmp[col]
+
+            # グラフの描画
+            rects = self.ax.plot(x, y, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            self.ax.legend(prop={"family":"MS Gothic"})
+            # self.autolabel(rects)
+
+            # 表示
+            self.figCanvas.draw()
+
+            # カウンター更新
+            self.itemNum = self.itemNum+1
+
+    # 週毎の棒グラフ
+    def weekly_bar_plot(self):
+        tmp = self.weeklySumDf
+        barWidth = 1
+        length = len(list(tmp.columns)) * barWidth * (-1)
+        for col in list(tmp.columns):
+            x = tmp.index + dt.timedelta(days=length)
+            y = tmp[col]
+
+            # グラフの描画
+            rects = self.ax.bar(x, y, width=barWidth, label=self.uidNameDf.loc[col][0], color=self.cmap(self.itemNum))
+            self.ax.legend(prop={"family":"MS Gothic"})
+
+            length = length+barWidth
+            # self.autolabel(rects)
 
             # 表示
             self.figCanvas.draw()
