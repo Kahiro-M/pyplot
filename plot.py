@@ -93,13 +93,8 @@ class Application(tk.Frame):
         # ファイルのエンコードを確認
         try:  # 以下の処理を実行
             with open(filePath, 'rb') as f:
-                detector = UniversalDetector()
-                for line in f:
-                    detector.feed(line)
-                    if detector.done:
-                        break
-                detector.close()
-                result = detector.result
+                # 先頭1kB読み込んで、エンコード判定
+                encRet = self.getencoding(f.read(1024))
         except FileNotFoundError as err:  # Errorが発生した場合、以下の処理を実行
             tk.messagebox.showerror('ファイルオープンエラー','ファイルが開けません。\n{0}'.format(err))
             return
@@ -108,7 +103,7 @@ class Application(tk.Frame):
             return
 
         enc = 'utf-8'
-        if result['encoding'] == 'SHIFT_JIS':
+        if encRet == 'SHIFT_JIS':
             enc = 'CP932'
 
         try:  # 以下の処理を実行
@@ -145,6 +140,9 @@ class Application(tk.Frame):
     # 任意の日付がその年で第何週目かを取得
     def getyearNthWeek(inDate):
         return inDate.isocalendar()[1]
+
+    def getencoding(self, dat:bytes):
+        return chardet.detect(dat)["encoding"]
 
     # 任意の日付がカレンダー上の第何週目かを取得
     def getNthWeek2Datetime(inDate, firstweekday=0):
