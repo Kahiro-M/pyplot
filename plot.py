@@ -215,7 +215,6 @@ class Application(tk.Frame):
 
             # グラフの描画
             self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
-            self.ax.set_xticklabels(self.ax.get_xticklabels(), rotation = 90)
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
@@ -233,7 +232,6 @@ class Application(tk.Frame):
 
             # グラフの描画
             rects = self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
-            self.ax.set_xticklabels(self.ax.get_xticklabels(), rotation = 90)
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
@@ -253,7 +251,6 @@ class Application(tk.Frame):
 
             # グラフの描画
             rects = self.ax.bar(x, y, width=barWidth, label=col, color=self.cmap(self.itemNum))
-            self.ax.set_xticklabels(self.ax.get_xticklabels(), rotation = 90)
             self.ax.legend(prop={"family":"MS Gothic"})
 
             length = length+barWidth
@@ -273,7 +270,6 @@ class Application(tk.Frame):
 
             # グラフの描画
             rects = self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
-            self.ax.set_xticklabels(self.ax.get_xticklabels(), rotation = 90)
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
@@ -291,7 +287,6 @@ class Application(tk.Frame):
 
             # グラフの描画
             rects = self.ax.plot(x, y, label=col, color=self.cmap(self.itemNum))
-            self.ax.set_xticklabels(self.ax.get_xticklabels(), rotation = 90)
             self.ax.legend(prop={"family":"MS Gothic"})
 
             # 表示
